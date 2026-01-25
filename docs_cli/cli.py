@@ -71,6 +71,7 @@ def query(
     no_docstring: bool = Option(False, "--no-docstring", help="Exclude docstring from output"),
     no_signature: bool = Option(False, "--no-signature", help="Exclude signature from output"),
     include_source: bool = Option(False, "--include-source", "-s", help="Include source location"),
+    include_metadata: bool = Option(False, "--include-metadata", "-m", help="Include SDK metadata"),
     list_members: bool = Option(False, "--list-members", "-l", help="List all members of module/class"),
     include_private: bool = Option(False, "--include-private", help="Include private members"),
     include_imported: bool = Option(False, "--include-imported", help="Include imported members"),
@@ -142,6 +143,7 @@ def query(
                     include_docstring=not no_docstring,
                     include_signature=not no_signature,
                     include_source=include_source,
+                    include_metadata=include_metadata,
                 )
             sys.stdout.write(json.dumps(output_dict, indent=2))
         else:

@@ -17,6 +17,7 @@ def format_json(
     include_source: bool = False,
     include_docstring: bool = True,
     include_signature: bool = True,
+    include_metadata: bool = False,
 ) -> dict:
     """Format an inspected element as JSON-serializable dictionary.
 
@@ -25,6 +26,7 @@ def format_json(
         include_source: Whether to include source location information
         include_docstring: Whether to include docstring information
         include_signature: Whether to include signature information
+        include_metadata: Whether to include SDK metadata
 
     Returns:
         JSON-serializable dictionary with element information
@@ -48,6 +50,10 @@ def format_json(
         output["source_location"] = _format_source_location(
             inspected.source_location
         )
+
+    # Add SDK metadata if available and requested
+    if include_metadata and inspected.sdk_metadata:
+        output["sdk_metadata"] = inspected.sdk_metadata
 
     return output
 
@@ -142,4 +148,5 @@ def format_json_verbose(inspected: InspectedElement) -> dict:
         include_source=True,
         include_docstring=True,
         include_signature=True,
+        include_metadata=True,
     )

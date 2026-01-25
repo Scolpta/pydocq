@@ -48,6 +48,7 @@ class InspectedElement:
     docstring: DocstringInfo | None = None
     source_location: SourceLocation | None = None
     module_path: str | None = None
+    sdk_metadata: dict | None = None
 
 
 def get_signature(obj: Any) -> SignatureInfo:
@@ -179,6 +180,17 @@ def inspect_element(element: ResolvedElement) -> InspectedElement:
     # Get source location
     source_location = get_source_location(element.obj)
 
+    # Get SDK metadata
+    sdk_metadata = None
+    try:
+        from docs_cli.sdk import get_metadata_dict
+
+        sdk_metadata = get_metadata_dict(element.obj)
+        if not sdk_metadata:
+            sdk_metadata = None
+    except ImportError:
+        pass
+
     return InspectedElement(
         path=element.path,
         element_type=element.element_type,
@@ -187,4 +199,5 @@ def inspect_element(element: ResolvedElement) -> InspectedElement:
         docstring=docstring,
         source_location=source_location,
         module_path=element.module_path,
+        sdk_metadata=sdk_metadata,
     )
