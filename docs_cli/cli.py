@@ -11,12 +11,12 @@ from docs_cli.analyzer.inspector import inspect_element
 from docs_cli.analyzer.output_formats import get_formatter
 from docs_cli.analyzer.resolver import (
     ElementNotFoundError,
-    ElementType,
     InvalidPathError,
     PackageNotFoundError,
     SecurityError,
     resolve_path,
 )
+from docs_cli.utils.type_detection import ElementType
 
 app = Typer(
     help="Query Python package documentation for AI agents",

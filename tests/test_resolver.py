@@ -4,12 +4,12 @@ import pytest
 
 from docs_cli.analyzer.resolver import (
     ElementNotFoundError,
-    ElementType,
     InvalidPathError,
     PackageNotFoundError,
     SecurityError,
     resolve_path,
 )
+from docs_cli.utils.type_detection import ElementType
 
 
 class TestResolvePath:

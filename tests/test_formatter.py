@@ -16,7 +16,8 @@ from docs_cli.analyzer.inspector import (
     SourceLocation,
     inspect_element,
 )
-from docs_cli.analyzer.resolver import ElementType, resolve_path
+from docs_cli.utils.type_detection import ElementType
+from docs_cli.analyzer.resolver import resolve_path
 
 
 class TestFormatSignature:

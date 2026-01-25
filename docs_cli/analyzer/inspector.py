@@ -8,7 +8,8 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
-from docs_cli.analyzer.resolver import ElementType, ResolvedElement
+from docs_cli.utils.type_detection import ElementType
+from docs_cli.analyzer.resolver import ResolvedElement
 
 
 @dataclass

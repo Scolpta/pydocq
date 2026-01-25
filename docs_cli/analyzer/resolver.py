@@ -3,8 +3,9 @@
 import importlib
 import re
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any
+
+from docs_cli.utils.type_detection import ElementType, get_element_type
 
 
 # Blacklist of dangerous modules that should not be imported
@@ -36,17 +37,6 @@ _DANGEROUS_PATHS = {
     "os.exec",
     "os.posix_spawn",
 }
-
-
-class ElementType(Enum):
-    """Type of Python element."""
-
-    MODULE = "module"
-    CLASS = "class"
-    FUNCTION = "function"
-    METHOD = "method"
-    PROPERTY = "property"
-    UNKNOWN = "unknown"
 
 
 @dataclass
@@ -216,7 +206,7 @@ def resolve_path(path_string: str) -> ResolvedElement:
                 ) from e
 
     # Determine the element type
-    element_type = _determine_element_type(current)
+    element_type = get_element_type(current)
 
     return ResolvedElement(
         path=path_string,
@@ -224,30 +214,6 @@ def resolve_path(path_string: str) -> ResolvedElement:
         obj=current,
         module_path=_get_module_path(current),
     )
-
-
-def _determine_element_type(obj: Any) -> ElementType:
-    """Determine the type of a Python object.
-
-    Args:
-        obj: Python object to classify
-
-    Returns:
-        ElementType enum value
-    """
-    import inspect
-
-    if inspect.ismodule(obj):
-        return ElementType.MODULE
-    if inspect.isclass(obj):
-        return ElementType.CLASS
-    if inspect.isfunction(obj):
-        return ElementType.FUNCTION
-    if inspect.ismethod(obj):
-        return ElementType.METHOD
-    if isinstance(obj, property):
-        return ElementType.PROPERTY
-    return ElementType.UNKNOWN
 
 
 def _get_module_path(obj: Any) -> str | None:

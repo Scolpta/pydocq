@@ -9,6 +9,7 @@ from docs_cli.analyzer.discovery import (
     discover_module_members,
 )
 from docs_cli.analyzer.resolver import ElementType
+from docs_cli.utils.type_detection import ElementType
 
 
 class TestDiscoverModuleMembers:

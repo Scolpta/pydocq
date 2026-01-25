@@ -18,6 +18,7 @@ from docs_cli.analyzer.output_formats import (
     get_formatter,
 )
 from docs_cli.analyzer.resolver import ElementType
+from docs_cli.utils.type_detection import ElementType
 
 
 class TestFormatRaw:

@@ -10,6 +10,7 @@ from docs_cli.analyzer.search import (
     search_by_type,
 )
 from docs_cli.analyzer.resolver import ElementType
+from docs_cli.utils.type_detection import ElementType
 
 
 class TestSearchResult:

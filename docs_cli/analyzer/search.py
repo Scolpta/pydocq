@@ -8,7 +8,8 @@ import fnmatch
 import inspect
 from typing import Any, Callable, List
 
-from docs_cli.analyzer.resolver import ElementType, ResolvedElement, resolve_path
+from docs_cli.analyzer.resolver import ResolvedElement, resolve_path
+from docs_cli.utils.type_detection import ElementType, get_element_type
 
 
 class SearchResult:
@@ -85,7 +86,7 @@ def search_by_name(
 
             # Check if name matches pattern
             if fnmatch.fnmatch(name, pattern):
-                element_type = _get_element_type(member)
+                element_type = get_element_type(member)
                 results.append(
                     SearchResult(
                         path=f"{current_path}.{name}",
@@ -142,7 +143,7 @@ def search_by_docstring(
             if doc:
                 doc_search = doc if case_sensitive else doc.lower()
                 if search_keyword in doc_search:
-                    element_type = _get_element_type(member)
+                    element_type = get_element_type(member)
                     results.append(
                         SearchResult(
                             path=f"{current_path}.{name}",
@@ -193,7 +194,7 @@ def search_by_type(
                 continue
 
             # Check if type matches
-            if _get_element_type(member) == element_type:
+            if get_element_type(member) == element_type:
                 results.append(
                     SearchResult(
                         path=f"{current_path}.{name}",
@@ -253,7 +254,7 @@ def search_by_metadata(
             meta = get_metadata_dict(member)
             if metadata_key in meta:
                 if metadata_value is None or meta[metadata_key] == metadata_value:
-                    element_type = _get_element_type(member)
+                    element_type = get_element_type(member)
                     results.append(
                         SearchResult(
                             path=f"{current_path}.{name}",
@@ -270,27 +271,3 @@ def search_by_metadata(
 
     search_object(resolved.obj, resolved.path)
     return results
-
-
-def _get_element_type(obj: Any) -> ElementType:
-    """Get the element type of an object.
-
-    Args:
-        obj: Python object
-
-    Returns:
-        ElementType enum value
-    """
-    import inspect as insp
-
-    if insp.ismodule(obj):
-        return ElementType.MODULE
-    if insp.isclass(obj):
-        return ElementType.CLASS
-    if insp.isfunction(obj):
-        return ElementType.FUNCTION
-    if insp.ismethod(obj):
-        return ElementType.METHOD
-    if isinstance(obj, property):
-        return ElementType.PROPERTY
-    return ElementType.UNKNOWN

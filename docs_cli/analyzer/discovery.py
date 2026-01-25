@@ -8,7 +8,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
-from docs_cli.analyzer.resolver import ElementType
+from docs_cli.utils.type_detection import ElementType, get_element_type
 
 
 @dataclass
@@ -66,7 +66,7 @@ def discover_module_members(
                 continue
 
         # Determine the element type
-        element_type = _determine_element_type(obj)
+        element_type = get_element_type(obj)
 
         # Check if it's public
         is_public = not name.startswith("_")
@@ -137,7 +137,7 @@ def discover_class_members(
             is_defined_here = name in cls.__dict__
 
         # Determine the element type
-        element_type = _determine_element_type(obj)
+        element_type = get_element_type(obj)
 
         # Check if it's public (dunder methods are considered private)
         is_public = not (name.startswith("_") and not name.startswith("__"))
@@ -153,25 +153,3 @@ def discover_class_members(
         members.append(member_info)
 
     return members
-
-
-def _determine_element_type(obj: Any) -> ElementType:
-    """Determine the type of a Python object.
-
-    Args:
-        obj: Python object to classify
-
-    Returns:
-        ElementType enum value
-    """
-    if inspect.ismodule(obj):
-        return ElementType.MODULE
-    if inspect.isclass(obj):
-        return ElementType.CLASS
-    if inspect.isfunction(obj):
-        return ElementType.FUNCTION
-    if inspect.ismethod(obj):
-        return ElementType.METHOD
-    if isinstance(obj, property):
-        return ElementType.PROPERTY
-    return ElementType.UNKNOWN

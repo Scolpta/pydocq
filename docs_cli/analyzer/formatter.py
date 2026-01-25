@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from docs_cli.analyzer.inspector import InspectedElement
-from docs_cli.analyzer.resolver import ElementType
+from docs_cli.utils.type_detection import ElementType
 
 
 def format_json(
