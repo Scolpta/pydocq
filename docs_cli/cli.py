@@ -14,6 +14,7 @@ from docs_cli.analyzer.resolver import (
     ElementType,
     InvalidPathError,
     PackageNotFoundError,
+    SecurityError,
     resolve_path,
 )
 
@@ -155,7 +156,7 @@ def query(
             if not output.endswith('\n'):
                 sys.stdout.write('\n')
 
-    except (InvalidPathError, PackageNotFoundError, ElementNotFoundError) as e:
+    except (InvalidPathError, PackageNotFoundError, ElementNotFoundError, SecurityError) as e:
         sys.stderr.write(f"Error: {e}\n")
         raise Exit(code=1)
     except ValueError as e:

@@ -7,6 +7,7 @@ from docs_cli.analyzer.resolver import (
     ElementType,
     InvalidPathError,
     PackageNotFoundError,
+    SecurityError,
     resolve_path,
 )
 
@@ -65,9 +66,9 @@ class TestResolvePath:
 
     def test_invalid_path_with_leading_dot(self) -> None:
         """Test that path with leading dot is handled."""
-        # Leading dots cause ValueError from importlib
+        # Leading dots cause ValueError from importlib or SecurityError from our validation
         # We expect this to be caught and converted to our error type
-        with pytest.raises((PackageNotFoundError, InvalidPathError, ValueError)):
+        with pytest.raises((PackageNotFoundError, InvalidPathError, ValueError, SecurityError)):
             resolve_path(".invalid")
 
 
@@ -101,3 +102,109 @@ class TestResolverErrors:
         """Test InvalidPathError message."""
         error = InvalidPathError("invalid path")
         assert "invalid path" in str(error)
+
+
+class TestResolverSecurity:
+    """Tests for resolver security validation."""
+
+    def test_dangerous_module_subprocess_blocked(self) -> None:
+        """Test that subprocess module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("subprocess")
+
+    def test_dangerous_module_os_system_blocked(self) -> None:
+        """Test that os.system is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("os.system")
+
+    def test_dangerous_module_multiprocessing_blocked(self) -> None:
+        """Test that multiprocessing module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("multiprocessing")
+
+    def test_dangerous_module_threading_blocked(self) -> None:
+        """Test that threading module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("threading")
+
+    def test_dangerous_module_socket_blocked(self) -> None:
+        """Test that socket module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("socket")
+
+    def test_dangerous_module_ssl_blocked(self) -> None:
+        """Test that ssl module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("ssl")
+
+    def test_dangerous_module_http_blocked(self) -> None:
+        """Test that http module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("http")
+
+    def test_dangerous_module_urllib_blocked(self) -> None:
+        """Test that urllib module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("urllib")
+
+    def test_dangerous_module_pickle_blocked(self) -> None:
+        """Test that pickle module is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("pickle")
+
+    def test_dangerous_module_eval_blocked(self) -> None:
+        """Test that eval is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("eval")
+
+    def test_dangerous_module_exec_blocked(self) -> None:
+        """Test that exec is blocked."""
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("exec")
+
+    def test_path_traversal_with_double_dot(self) -> None:
+        """Test that path traversal with .. is blocked."""
+        with pytest.raises(SecurityError, match="Path traversal detected"):
+            resolve_path("os../subprocess")
+
+    def test_path_traversal_with_leading_slash(self) -> None:
+        """Test that path traversal with leading / is blocked."""
+        with pytest.raises(SecurityError, match="Path traversal detected"):
+            resolve_path("/etc/passwd")
+
+    def test_path_traversal_with_leading_backslash(self) -> None:
+        """Test that path traversal with leading \\ is blocked."""
+        with pytest.raises(SecurityError, match="Path traversal detected"):
+            resolve_path("\\windows\\system32")
+
+    def test_private_module_rejected(self) -> None:
+        """Test that modules starting with underscore are rejected."""
+        with pytest.raises(SecurityError, match="private module.*not allowed"):
+            resolve_path("_private")
+
+    def test_invalid_package_name_format(self) -> None:
+        """Test that invalid package name formats are rejected."""
+        with pytest.raises(SecurityError, match="Invalid package name format"):
+            resolve_path("pkg-with-dash")
+
+    def test_invalid_package_name_with_special_chars(self) -> None:
+        """Test that special characters in package name are rejected."""
+        with pytest.raises(SecurityError, match="Invalid package name format"):
+            resolve_path("pkg@#$")
+
+    def test_valid_module_with_underscore_in_name(self) -> None:
+        """Test that valid modules with underscores are allowed."""
+        # This should work - underscore is valid in Python identifiers
+        result = resolve_path("builtins.__import__")
+        assert result.path == "builtins.__import__"
+
+    def test_os_module_allowed_but_os_system_blocked(self) -> None:
+        """Test that os module is allowed but os.system is not."""
+        # os module itself should work
+        result = resolve_path("os")
+        assert result.path == "os"
+        assert result.element_type == ElementType.MODULE
+
+        # But os.system should be blocked
+        with pytest.raises(SecurityError, match="not allowed for security reasons"):
+            resolve_path("os.system")

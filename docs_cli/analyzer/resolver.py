@@ -1,9 +1,41 @@
 """Path resolution for Python packages and elements."""
 
 import importlib
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+
+
+# Blacklist of dangerous modules that should not be imported
+_DANGEROUS_MODULES = {
+    "subprocess",
+    "multiprocessing",
+    "threading",
+    "socket",
+    "ssl",
+    "http",
+    "urllib",
+    "urllib2",
+    "httplib",
+    "ftplib",
+    "telnetlib",
+    "pickle",
+    "shelve",
+    "marshal",
+    "eval",
+    "exec",
+}
+
+# Blacklist of dangerous module paths that should not be accessed
+_DANGEROUS_PATHS = {
+    "os.system",
+    "os.popen",
+    "os.spawn",
+    "os.fork",
+    "os.exec",
+    "os.posix_spawn",
+}
 
 
 class ElementType(Enum):
@@ -52,6 +84,47 @@ class InvalidPathError(ResolverError):
     pass
 
 
+class SecurityError(ResolverError):
+    """Raised when a path is rejected for security reasons."""
+
+    pass
+
+
+def _validate_package_name(package_name: str) -> None:
+    """Validate that a package name is safe to import.
+
+    Args:
+        package_name: Name of the package to validate
+
+    Raises:
+        SecurityError: If the package name is dangerous or invalid
+    """
+    # Check for path traversal attempts
+    if ".." in package_name or package_name.startswith(("/", "\\")):
+        raise SecurityError(
+            f"Path traversal detected in package name: {package_name}"
+        )
+
+    # Check for absolute paths
+    if re.match(r'^[a-zA-Z_]', package_name) and not re.match(r'^[a-zA-Z_][a-zA-Z0-9_\.]*$', package_name):
+        raise SecurityError(
+            f"Invalid package name format: {package_name}. "
+            "Package names must be valid Python identifiers separated by dots."
+        )
+
+    # Check against dangerous modules blacklist
+    if package_name in _DANGEROUS_MODULES:
+        raise SecurityError(
+            f"Import of module '{package_name}' is not allowed for security reasons"
+        )
+
+    # Check if package name starts with underscore (private/internal)
+    if package_name.startswith("_"):
+        raise SecurityError(
+            f"Import of private module '{package_name}' is not allowed"
+        )
+
+
 def resolve_path(path_string: str) -> ResolvedElement:
     """Resolve a path string to an actual Python element.
 
@@ -65,6 +138,7 @@ def resolve_path(path_string: str) -> ResolvedElement:
         InvalidPathError: If path string is invalid
         PackageNotFoundError: If package cannot be imported
         ElementNotFoundError: If element cannot be found
+        SecurityError: If path contains dangerous or invalid components
     """
     if not path_string:
         raise InvalidPathError("Path string cannot be empty")
@@ -75,8 +149,34 @@ def resolve_path(path_string: str) -> ResolvedElement:
     if not parts:
         raise InvalidPathError(f"Invalid path: {path_string}")
 
+    # Check for empty parts (resulting from .. or leading/trailing dots)
+    if any(part == "" for part in parts):
+        raise SecurityError(
+            f"Path traversal detected in package name: {path_string}"
+        )
+
     # The first part is always the package name
     package_name = parts[0]
+
+    # Validate package name for security
+    _validate_package_name(package_name)
+
+    # Validate all parts against dangerous modules blacklist
+    for part in parts:
+        if part in _DANGEROUS_MODULES:
+            raise SecurityError(
+                f"Import of module '{part}' is not allowed for security reasons"
+            )
+
+    # Validate path combinations against dangerous paths blacklist
+    # Build paths incrementally (e.g., for "os.system", check both "os" and "os.system")
+    current_path = parts[0]
+    for part in parts[1:]:
+        current_path = f"{current_path}.{part}"
+        if current_path in _DANGEROUS_PATHS:
+            raise SecurityError(
+                f"Access to '{current_path}' is not allowed for security reasons"
+            )
 
     try:
         # Try to import the package/module
