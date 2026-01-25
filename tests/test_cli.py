@@ -171,8 +171,55 @@ def test_query_list_members_with_private() -> None:
 def test_query_list_members_function_returns_error() -> None:
     """Test that --list-members on a function returns an error message."""
     result = runner.invoke(app, ["--list-members", "os.path.join"])
+    assert result.exit_code == 1
+
+    # Error message goes to stderr
+    if result.stderr:
+        assert "Cannot list members" in result.stderr
+
+
+def test_query_format_raw() -> None:
+    """Test the --format raw option."""
+    result = runner.invoke(app, ["--format", "raw", "json.dumps"])
     assert result.exit_code == 0
 
-    output = json.loads(result.stdout)
-    # Functions don't have members, should return error message
-    assert "error" in output or "members" not in output
+    output = result.stdout
+    assert "Path: json.dumps" in output
+    assert "Type: function" in output
+
+
+def test_query_format_signature() -> None:
+    """Test the --format signature option."""
+    result = runner.invoke(app, ["--format", "signature", "json.dumps"])
+    assert result.exit_code == 0
+
+    output = result.stdout.strip()
+    assert "json.dumps(" in output
+
+
+def test_query_format_markdown() -> None:
+    """Test the --format markdown option."""
+    result = runner.invoke(app, ["--format", "markdown", "json.dumps"])
+    assert result.exit_code == 0
+
+    output = result.stdout
+    assert "# `json.dumps`" in output
+    assert "## Signature" in output
+
+
+def test_query_format_yaml() -> None:
+    """Test the --format yaml option."""
+    result = runner.invoke(app, ["--format", "yaml", "json.dumps"])
+    assert result.exit_code == 0
+
+    output = result.stdout
+    assert '"path": "json.dumps"' in output
+
+
+def test_query_format_invalid() -> None:
+    """Test that invalid format returns error."""
+    result = runner.invoke(app, ["--format", "invalid", "json.dumps"])
+    assert result.exit_code == 1
+
+    if result.stderr:
+        assert "Unsupported format" in result.stderr

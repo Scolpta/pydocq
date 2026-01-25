@@ -8,6 +8,7 @@ from typer import Exit, Option, Typer
 from docs_cli.analyzer.discovery import discover_class_members, discover_module_members
 from docs_cli.analyzer.formatter import format_json, format_json_compact, format_json_verbose
 from docs_cli.analyzer.inspector import inspect_element
+from docs_cli.analyzer.output_formats import get_formatter
 from docs_cli.analyzer.resolver import (
     ElementNotFoundError,
     ElementType,
@@ -64,6 +65,7 @@ def _format_module_members(module_members) -> dict:
 def query(
     target: str,
     version: bool = Option(False, "--version", "-v", help="Show version and exit"),
+    format: str = Option("json", "--format", "-f", help="Output format (json, raw, signature, markdown, yaml)"),
     compact: bool = Option(False, "--compact", "-c", help="Use compact output format"),
     verbose: bool = Option(False, "--verbose", "-V", help="Use verbose output format"),
     no_docstring: bool = Option(False, "--no-docstring", help="Exclude docstring from output"),
@@ -101,42 +103,61 @@ def query(
                     include_private=include_private,
                     include_imported=include_imported,
                 )
-                output = _format_module_members(members)
+                output_dict = _format_module_members(members)
+                # Output is always JSON for list_members
+                sys.stdout.write(json.dumps(output_dict, indent=2))
+                return
             elif resolved.element_type == ElementType.CLASS:
                 members = discover_class_members(
                     resolved.obj,
                     include_private=include_private,
                     include_inherited=include_inherited,
                 )
-                output = {
+                output_dict = {
                     "path": resolved.path,
                     "type": resolved.element_type.value,
                     "members": [_format_member_info(m) for m in members],
                 }
+                # Output is always JSON for list_members
+                sys.stdout.write(json.dumps(output_dict, indent=2))
+                return
             else:
-                # For other types, just return the inspected element
-                output = {"error": "Cannot list members for non-module/class types"}
-        else:
-            # Inspect the element
-            inspected = inspect_element(resolved)
+                # For other types, return error
+                sys.stderr.write("Error: Cannot list members for non-module/class types\n")
+                raise Exit(code=1)
 
-            # Format output based on options
+        # Inspect the element
+        inspected = inspect_element(resolved)
+
+        # Handle different output formats
+        if format == "json":
+            # Standard JSON output with options
             if compact:
-                output = format_json_compact(inspected)
+                output_dict = format_json_compact(inspected)
             elif verbose:
-                output = format_json_verbose(inspected)
+                output_dict = format_json_verbose(inspected)
             else:
-                output = format_json(
+                output_dict = format_json(
                     inspected,
                     include_docstring=not no_docstring,
                     include_signature=not no_signature,
                     include_source=include_source,
                 )
-
-        # Print as JSON
-        sys.stdout.write(json.dumps(output, indent=2))
+            sys.stdout.write(json.dumps(output_dict, indent=2))
+        else:
+            # Use custom formatter (raw, signature, markdown, yaml)
+            formatter = get_formatter(format)
+            output = formatter(inspected)
+            sys.stdout.write(output)
+            # Add newline for non-JSON formats
+            if not output.endswith('\n'):
+                sys.stdout.write('\n')
 
     except (InvalidPathError, PackageNotFoundError, ElementNotFoundError) as e:
+        sys.stderr.write(f"Error: {e}\n")
+        raise Exit(code=1)
+    except ValueError as e:
+        # Invalid format type
         sys.stderr.write(f"Error: {e}\n")
         raise Exit(code=1)
 
