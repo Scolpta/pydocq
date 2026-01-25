@@ -26,6 +26,8 @@ def test_query_command() -> None:
     assert output["path"] == "os"
     assert output["type"] == "module"
     assert output["module_path"] == "os"
+    # Default output includes signature and docstring
+    assert "docstring" in output
 
 
 def test_query_command_nested() -> None:
@@ -37,6 +39,9 @@ def test_query_command_nested() -> None:
     assert output["path"] == "os.path.join"
     assert output["type"] == "function"
     assert output["module_path"] is not None
+    # Default output includes signature and docstring
+    assert "signature" in output
+    assert "docstring" in output
 
 
 def test_query_command_class() -> None:
@@ -47,6 +52,8 @@ def test_query_command_class() -> None:
     output = json.loads(result.stdout)
     assert output["path"] == "builtins.str"
     assert output["type"] == "class"
+    # Classes have signature (__init__) or docstring
+    assert "docstring" in output
 
 
 def test_query_command_nonexistent_package() -> None:
@@ -65,3 +72,59 @@ def test_query_command_nonexistent_element() -> None:
     # The error message goes to stderr
     if result.stderr:
         assert "NonExistentClass" in result.stderr or "not found" in result.stderr
+
+
+def test_query_compact_option() -> None:
+    """Test the --compact option."""
+    result = runner.invoke(app, ["--compact", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    # Compact mode only has basic fields
+    assert set(output.keys()) == {"path", "type", "module_path"}
+    assert output["path"] == "os.path.join"
+
+
+def test_query_verbose_option() -> None:
+    """Test the --verbose option."""
+    result = runner.invoke(app, ["--verbose", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    # Verbose mode has all fields
+    assert "path" in output
+    assert "type" in output
+    assert "module_path" in output
+    assert "signature" in output
+    assert "docstring" in output
+    assert "source_location" in output
+
+
+def test_query_no_docstring_option() -> None:
+    """Test the --no-docstring option."""
+    result = runner.invoke(app, ["--no-docstring", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    assert "docstring" not in output
+    assert "signature" in output
+
+
+def test_query_no_signature_option() -> None:
+    """Test the --no-signature option."""
+    result = runner.invoke(app, ["--no-signature", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    assert "signature" not in output
+    assert "docstring" in output
+
+
+def test_query_include_source_option() -> None:
+    """Test the --include-source option."""
+    result = runner.invoke(app, ["--include-source", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    assert "source_location" in output
+    assert "file" in output["source_location"] or "line" in output["source_location"]
