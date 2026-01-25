@@ -128,3 +128,51 @@ def test_query_include_source_option() -> None:
     output = json.loads(result.stdout)
     assert "source_location" in output
     assert "file" in output["source_location"] or "line" in output["source_location"]
+
+
+def test_query_list_members_module() -> None:
+    """Test the --list-members option for modules."""
+    result = runner.invoke(app, ["--list-members", "json"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    assert "path" in output
+    assert "members" in output
+    assert "classes" in output or "functions" in output
+    assert len(output["members"]) > 0
+
+
+def test_query_list_members_class() -> None:
+    """Test the --list-members option for classes."""
+    result = runner.invoke(app, ["--list-members", "builtins.str"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    assert "path" in output
+    assert "type" in output
+    assert "members" in output
+
+
+def test_query_list_members_with_private() -> None:
+    """Test the --list-members option with --include-private."""
+    result_no_private = runner.invoke(app, ["--list-members", "json"])
+    result_with_private = runner.invoke(app, ["--list-members", "--include-private", "json"])
+
+    assert result_no_private.exit_code == 0
+    assert result_with_private.exit_code == 0
+
+    output_no_private = json.loads(result_no_private.stdout)
+    output_with_private = json.loads(result_with_private.stdout)
+
+    # With private should have more or equal members
+    assert len(output_with_private["members"]) >= len(output_no_private["members"])
+
+
+def test_query_list_members_function_returns_error() -> None:
+    """Test that --list-members on a function returns an error message."""
+    result = runner.invoke(app, ["--list-members", "os.path.join"])
+    assert result.exit_code == 0
+
+    output = json.loads(result.stdout)
+    # Functions don't have members, should return error message
+    assert "error" in output or "members" not in output
