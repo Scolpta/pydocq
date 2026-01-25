@@ -6,16 +6,11 @@ import sys
 from typer import Exit, Option, Typer
 
 from docs_cli.analyzer.discovery import discover_class_members, discover_module_members
+from docs_cli.analyzer.errors import DocsCliError
 from docs_cli.analyzer.formatter import format_json, format_json_compact, format_json_verbose
 from docs_cli.analyzer.inspector import inspect_element
 from docs_cli.analyzer.output_formats import get_formatter
-from docs_cli.analyzer.resolver import (
-    ElementNotFoundError,
-    InvalidPathError,
-    PackageNotFoundError,
-    SecurityError,
-    resolve_path,
-)
+from docs_cli.analyzer.resolver import resolve_path
 from docs_cli.utils.type_detection import ElementType
 
 app = Typer(
@@ -156,7 +151,7 @@ def query(
             if not output.endswith('\n'):
                 sys.stdout.write('\n')
 
-    except (InvalidPathError, PackageNotFoundError, ElementNotFoundError, SecurityError) as e:
+    except DocsCliError as e:
         sys.stderr.write(f"Error: {e}\n")
         raise Exit(code=1)
     except ValueError as e:

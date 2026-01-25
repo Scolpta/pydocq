@@ -5,6 +5,12 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from docs_cli.analyzer.errors import (
+    ElementNotFoundError,
+    InvalidPathError,
+    PackageNotFoundError,
+    SecurityError,
+)
 from docs_cli.utils.type_detection import ElementType, get_element_type
 
 
@@ -48,36 +54,6 @@ class ResolvedElement:
     obj: Any
     module_path: str | None = None
     parent: Any | None = None
-
-
-class ResolverError(Exception):
-    """Base exception for resolver errors."""
-
-    pass
-
-
-class PackageNotFoundError(ResolverError):
-    """Raised when a package cannot be found or imported."""
-
-    pass
-
-
-class ElementNotFoundError(ResolverError):
-    """Raised when an element cannot be found in a module."""
-
-    pass
-
-
-class InvalidPathError(ResolverError):
-    """Raised when a path string is invalid."""
-
-    pass
-
-
-class SecurityError(ResolverError):
-    """Raised when a path is rejected for security reasons."""
-
-    pass
 
 
 def _validate_package_name(package_name: str) -> None:

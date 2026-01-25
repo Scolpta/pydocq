@@ -1,29 +1,29 @@
 """Enhanced error handling for docs-cli.
 
-This module provides custom exceptions and error handling utilities
-for better error messages and debugging.
+This module provides the unified exception hierarchy for all docs-cli errors.
 """
 
 import sys
-from typing import Any
-
-from docs_cli.analyzer.resolver import (
-    ElementNotFoundError,
-    InvalidPathError,
-    PackageNotFoundError,
-    ResolverError,
-)
+from typing import Any, Optional
 
 
 class DocsCliError(Exception):
-    """Base exception for docs-cli errors."""
+    """Base exception for all docs-cli errors.
 
-    def __init__(self, message: str, details: dict | None = None) -> None:
+    All custom exceptions should inherit from this class.
+    Provides consistent error formatting and JSON output support.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        details: Optional[dict[str, Any]] = None,
+    ) -> None:
         """Initialize error with message and optional details.
 
         Args:
-            message: Error message
-            details: Additional error details for debugging
+            message: Human-readable error message
+            details: Additional structured details for debugging/JSON output
         """
         self.message = message
         self.details = details or {}
@@ -42,11 +42,43 @@ class DocsCliError(Exception):
         }
 
 
+# ============================================================================
+# Resolution Exceptions (inherit from DocsCliError)
+# ============================================================================
+
 class ResolutionError(DocsCliError):
-    """Error during path resolution."""
+    """Base exception for resolution errors."""
 
     pass
 
+
+class PackageNotFoundError(ResolutionError):
+    """Raised when a package cannot be found or imported."""
+
+    pass
+
+
+class ElementNotFoundError(ResolutionError):
+    """Raised when an element cannot be found in a module."""
+
+    pass
+
+
+class InvalidPathError(ResolutionError):
+    """Raised when a path string is invalid."""
+
+    pass
+
+
+class SecurityError(ResolutionError):
+    """Raised when a path is rejected for security reasons."""
+
+    pass
+
+
+# ============================================================================
+# Other Exception Categories
+# ============================================================================
 
 class InspectionError(DocsCliError):
     """Error during element inspection."""
@@ -71,6 +103,10 @@ class FormatValidationError(DocsCliError):
 
     pass
 
+
+# ============================================================================
+# Error Handling Utilities
+# ============================================================================
 
 def format_error_for_output(
     error: Exception, include_traceback: bool = False
@@ -137,29 +173,6 @@ def handle_error(
     sys.exit(exit_code)
 
 
-def create_resolution_error(original_error: ResolverError) -> ResolutionError:
-    """Create a ResolutionError from a ResolverError.
-
-    Args:
-        original_error: The original resolver error
-
-    Returns:
-        ResolutionError with enhanced message
-    """
-    details = {"original_type": original_error.__class__.__name__}
-
-    if isinstance(original_error, PackageNotFoundError):
-        message = f"Package or module not found: {original_error}"
-    elif isinstance(original_error, ElementNotFoundError):
-        message = f"Element not found: {original_error}"
-    elif isinstance(original_error, InvalidPathError):
-        message = f"Invalid path: {original_error}"
-    else:
-        message = f"Resolution error: {original_error}"
-
-    return ResolutionError(message, details=details)
-
-
 def wrap_error(
     error: Exception,
     wrapper_class: type[DocsCliError],
@@ -179,3 +192,36 @@ def wrap_error(
     details = {"original_type": error.__class__.__name__, "original_message": str(error)}
 
     return wrapper_class(message, details=details)
+
+
+def create_resolution_error(original_error: ResolutionError) -> ResolutionError:
+    """Create a ResolutionError from another resolution error.
+
+    This function exists for backwards compatibility and test support.
+    Since all resolution errors now inherit from ResolutionError,
+    it simply returns the original error with enhanced details.
+
+    Args:
+        original_error: The original resolution error
+
+    Returns:
+        ResolutionError with potentially enhanced message
+    """
+    # If already a ResolutionError with details, return as-is
+    if isinstance(original_error, PackageNotFoundError):
+        message = f"Package or module not found: {original_error}"
+    elif isinstance(original_error, ElementNotFoundError):
+        message = f"Element not found: {original_error}"
+    elif isinstance(original_error, InvalidPathError):
+        message = f"Invalid path: {original_error}"
+    elif isinstance(original_error, SecurityError):
+        message = f"Security error: {original_error}"
+    else:
+        message = str(original_error)
+
+    # Create new error with enhanced message and original type in details
+    details = {"original_type": original_error.__class__.__name__}
+    if hasattr(original_error, "details"):
+        details.update(original_error.details)
+
+    return ResolutionError(message, details=details)
