@@ -1,7 +1,17 @@
 """Static analysis using Python's AST module.
 
 This module provides functions to analyze Python source code using the
-Abstract Syntax Tree (AST) without importing the code.
+Abstract Syntax Tree (AST) without importing or executing the code.
+
+IMPORTANT: This module only parses and analyzes code structure. It does NOT
+execute any code. All analysis is performed on the AST representation only,
+which makes it safe to analyze untrusted or malicious code without side effects.
+
+Security guarantees:
+- Code is parsed with ast.parse() which only creates an AST
+- No functions are called, no code is executed
+- No import statements are processed
+- Only the structure (functions, classes, imports) is extracted
 """
 
 import ast

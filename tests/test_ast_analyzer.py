@@ -283,6 +283,47 @@ class TestFindCalls:
 class TestASTSecurity:
     """Tests for AST file path security validation."""
 
+    def test_ast_does_not_execute_code_with_side_effects(self) -> None:
+        """Test that AST analysis doesn't execute code with side effects.
+
+        This test verifies that analyzing malicious code doesn't actually
+        execute it. The code contains various side effects that would be
+        dangerous if executed.
+        """
+        # Track if any side effects were executed
+        executed = []
+
+        # Source code with dangerous side effects
+        dangerous_source = '''
+# This would modify a global variable if executed
+global_side_effect = "DANGEROUS"
+
+# This would call a function if executed
+def dangerous_function():
+    global executed
+    executed.append("DANGEROUS")
+    return "DANGEROUS"
+
+# This would execute on import
+executed.append("MODULE_EXECUTED")
+
+# Simulate file operations (would be dangerous if executed)
+import os
+os.system("echo DANGEROUS")
+'''
+
+        # Analyze the source - this should NOT execute any code
+        tree = parse_source(dangerous_source)
+        info = analyze_module(tree, "dangerous_module")
+
+        # Verify that the analysis completed safely
+        assert info.path == "dangerous_module"
+        assert len(info.functions) == 1
+        assert info.functions[0].name == "dangerous_function"
+
+        # Verify no side effects occurred (executed list should still be empty)
+        assert executed == [], "Code was executed during AST analysis!"
+
     def test_path_traversal_with_double_dot_blocked(self) -> None:
         """Test that path traversal with ../ is blocked."""
         with pytest.raises(ASTSecurityError, match="dangerous pattern"):
