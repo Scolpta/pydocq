@@ -9,6 +9,7 @@ from docs_cli.analyzer.ast_analyzer import (
     ASTFunctionInfo,
     ASTImportInfo,
     ASTModuleInfo,
+    ASTSecurityError,
     analyze_file,
     analyze_module,
     analyze_object,
@@ -277,3 +278,63 @@ class TestFindCalls:
 
         # Currently returns empty list (placeholder)
         assert isinstance(calls, list)
+
+
+class TestASTSecurity:
+    """Tests for AST file path security validation."""
+
+    def test_path_traversal_with_double_dot_blocked(self) -> None:
+        """Test that path traversal with ../ is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("../test.py")
+
+    def test_path_traversal_with_double_dot_and_path_blocked(self) -> None:
+        """Test that path traversal with ../something is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("../etc/passwd.py")
+
+    def test_etc_directory_blocked(self) -> None:
+        """Test that /etc/ directory access is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("/etc/test.py")
+
+    def test_sys_directory_blocked(self) -> None:
+        """Test that /sys/ directory access is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("/sys/test.py")
+
+    def test_proc_directory_blocked(self) -> None:
+        """Test that /proc/ directory access is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("/proc/test.py")
+
+    def test_root_directory_blocked(self) -> None:
+        """Test that /root/ directory access is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("/root/test.py")
+
+    def test_home_directory_blocked(self) -> None:
+        """Test that ~ home directory shortcut is blocked."""
+        with pytest.raises(ASTSecurityError, match="dangerous pattern"):
+            analyze_file("~/test.py")
+
+    def test_absolute_path_blocked(self) -> None:
+        """Test that absolute paths are blocked."""
+        with pytest.raises(ASTSecurityError, match="Absolute paths are not allowed"):
+            analyze_file("/usr/lib/python3/os.py")
+
+    def test_non_py_file_blocked(self) -> None:
+        """Test that non-.py files are blocked."""
+        with pytest.raises(ASTSecurityError, match="Only Python files"):
+            analyze_file("test.txt")
+
+    def test_non_py_file_with_different_extension_blocked(self) -> None:
+        """Test that files with other extensions are blocked."""
+        with pytest.raises(ASTSecurityError, match="Only Python files"):
+            analyze_file("test.md")
+
+    def test_nonexistent_py_file_raises_file_not_found(self) -> None:
+        """Test that nonexistent .py files raise FileNotFoundError."""
+        # This should pass validation but fail at file existence check
+        with pytest.raises(FileNotFoundError, match="File not found"):
+            analyze_file("nonexistent.py")

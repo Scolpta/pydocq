@@ -6,9 +6,28 @@ Abstract Syntax Tree (AST) without importing the code.
 
 import ast
 import inspect
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+
+# Patterns that should not appear in file paths for security reasons
+_DANGEROUS_PATH_PATTERNS = [
+    r"\.\./",  # Parent directory traversal
+    r"\.\./.*",  # Parent directory with path
+    r"/etc/",  # System configuration files
+    r"/sys/",  # System files
+    r"/proc/",  # Process files
+    r"/root/",  # Root user directory
+    r"~",  # Home directory shortcut
+]
+
+
+class ASTSecurityError(Exception):
+    """Raised when a file path is rejected for security reasons."""
+
+    pass
 
 
 @dataclass
@@ -59,6 +78,38 @@ class ASTModuleInfo:
     globals: list[str] = field(default_factory=list)
 
 
+def _validate_file_path(file_path: str) -> None:
+    """Validate that a file path is safe to access.
+
+    Args:
+        file_path: Path to validate
+
+    Raises:
+        ASTSecurityError: If the path contains dangerous patterns
+    """
+    # Check for dangerous patterns
+    for pattern in _DANGEROUS_PATH_PATTERNS:
+        if re.search(pattern, file_path):
+            raise ASTSecurityError(
+                f"File path contains dangerous pattern: {file_path}. "
+                f"Path traversal and system file access are not allowed."
+            )
+
+    # Check for absolute paths (absolute paths are generally not needed for this tool)
+    path = Path(file_path)
+    if path.is_absolute():
+        raise ASTSecurityError(
+            f"Absolute paths are not allowed: {file_path}. "
+            f"Please use relative paths."
+        )
+
+    # Check file extension - should be .py
+    if not file_path.endswith(".py"):
+        raise ASTSecurityError(
+            f"Only Python files (.py) are allowed: {file_path}"
+        )
+
+
 def parse_source(source: str) -> ast.Module:
     """Parse Python source code into an AST.
 
@@ -87,9 +138,13 @@ def parse_file(file_path: str) -> ast.Module:
         AST module node
 
     Raises:
+        ASTSecurityError: If file path is dangerous
         FileNotFoundError: If file doesn't exist
         SyntaxError: If file has invalid syntax
     """
+    # Validate file path for security
+    _validate_file_path(file_path)
+
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -255,6 +310,11 @@ def analyze_file(file_path: str) -> ASTModuleInfo:
 
     Returns:
         ASTModuleInfo with complete analysis
+
+    Raises:
+        ASTSecurityError: If file path is dangerous
+        FileNotFoundError: If file doesn't exist
+        SyntaxError: If file has invalid syntax
     """
     tree = parse_file(file_path)
     return analyze_module(tree, file_path)
