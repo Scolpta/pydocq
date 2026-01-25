@@ -273,7 +273,20 @@ Built with:
 
 ## Changelog
 
-### 0.1.0 (Unreleased)
+### 0.2.0 (2025-01-25)
+
+Security and Quality Improvements:
+- Add input sanitization to prevent dynamic import vulnerabilities (SEC-001)
+- Add file path validation to AST analyzer (SEC-002)
+- Document and verify AST doesn't execute code (SEC-003)
+- Extract duplicate type detection logic to centralized module (QUAL-001)
+- Consolidate exception hierarchies into unified system (QUAL-002)
+- Remove orphaned main.py placeholder file (QUAL-003)
+- Add depth limits and cycle detection to search functions (QUAL-004)
+- Rename docs_cli directory to pydocq for consistency
+- All 231 tests pass
+
+### 0.1.0 (2025-01-24)
 
 - Initial release
 - Path resolution for Python packages
