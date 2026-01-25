@@ -2,7 +2,7 @@
 
 import pytest
 
-from docs_cli.sdk import (
+from pydocq.sdk import (
     author,
     category,
     clear_metadata,
@@ -270,7 +270,7 @@ class TestMetadataClass:
 
     def test_metadata_get(self) -> None:
         """Test Metadata.get method."""
-        from docs_cli.sdk.decorators import Metadata
+        from pydocq.sdk.decorators import Metadata
 
         meta = Metadata(key1="value1", key2="value2")
 
@@ -279,7 +279,7 @@ class TestMetadataClass:
 
     def test_metadata_to_dict(self) -> None:
         """Test Metadata.to_dict method."""
-        from docs_cli.sdk.decorators import Metadata
+        from pydocq.sdk.decorators import Metadata
 
         meta = Metadata(key1="value1", key2="value2")
         result = meta.to_dict()

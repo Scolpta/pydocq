@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 import pytest
 
-from docs_cli.analyzer.type_parser import (
+from pydocq.analyzer.type_parser import (
     TypeInfo,
     get_class_type_hints,
     get_type_hints_safe,

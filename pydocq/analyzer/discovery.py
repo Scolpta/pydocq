@@ -8,7 +8,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
-from docs_cli.utils.type_detection import ElementType, get_element_type
+from pydocq.utils.type_detection import ElementType, get_element_type
 
 
 @dataclass

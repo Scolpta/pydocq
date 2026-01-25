@@ -5,13 +5,13 @@ import sys
 
 from typer import Exit, Option, Typer
 
-from docs_cli.analyzer.discovery import discover_class_members, discover_module_members
-from docs_cli.analyzer.errors import DocsCliError
-from docs_cli.analyzer.formatter import format_json, format_json_compact, format_json_verbose
-from docs_cli.analyzer.inspector import inspect_element
-from docs_cli.analyzer.output_formats import get_formatter
-from docs_cli.analyzer.resolver import resolve_path
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.discovery import discover_class_members, discover_module_members
+from pydocq.analyzer.errors import DocsCliError
+from pydocq.analyzer.formatter import format_json, format_json_compact, format_json_verbose
+from pydocq.analyzer.inspector import inspect_element
+from pydocq.analyzer.output_formats import get_formatter
+from pydocq.analyzer.resolver import resolve_path
+from pydocq.utils.type_detection import ElementType
 
 app = Typer(
     help="Query Python package documentation for AI agents",
@@ -83,7 +83,7 @@ def query(
         doc os.path.join
     """
     if version:
-        from docs_cli import __version__
+        from pydocq import __version__
 
         sys.stdout.write(f"docs-cli v{__version__}\n")
         raise Exit(code=0)

@@ -8,8 +8,8 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
-from docs_cli.utils.type_detection import ElementType
-from docs_cli.analyzer.resolver import ResolvedElement
+from pydocq.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import ResolvedElement
 
 
 @dataclass
@@ -184,7 +184,7 @@ def inspect_element(element: ResolvedElement) -> InspectedElement:
     # Get SDK metadata
     sdk_metadata = None
     try:
-        from docs_cli.sdk import get_metadata_dict
+        from pydocq.sdk import get_metadata_dict
 
         sdk_metadata = get_metadata_dict(element.obj)
         if not sdk_metadata:

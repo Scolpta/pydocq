@@ -9,9 +9,9 @@ import json
 import sys
 from typing import Any
 
-from docs_cli.analyzer.inspector import InspectedElement
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.inspector import InspectedElement
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 def format_raw(inspected: InspectedElement) -> str:

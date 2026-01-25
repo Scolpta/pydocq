@@ -5,13 +5,13 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from docs_cli.analyzer.errors import (
+from pydocq.analyzer.errors import (
     ElementNotFoundError,
     InvalidPathError,
     PackageNotFoundError,
     SecurityError,
 )
-from docs_cli.utils.type_detection import ElementType, get_element_type
+from pydocq.utils.type_detection import ElementType, get_element_type
 
 
 # Blacklist of dangerous modules that should not be imported

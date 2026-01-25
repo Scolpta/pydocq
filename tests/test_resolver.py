@@ -2,14 +2,14 @@
 
 import pytest
 
-from docs_cli.analyzer.resolver import (
+from pydocq.analyzer.resolver import (
     ElementNotFoundError,
     InvalidPathError,
     PackageNotFoundError,
     SecurityError,
     resolve_path,
 )
-from docs_cli.utils.type_detection import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 class TestResolvePath:

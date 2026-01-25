@@ -2,7 +2,7 @@
 
 import pytest
 
-from docs_cli.analyzer.errors import (
+from pydocq.analyzer.errors import (
     DiscoveryError,
     DocsCliError,
     FormatValidationError,
@@ -14,7 +14,7 @@ from docs_cli.analyzer.errors import (
     handle_error,
     wrap_error,
 )
-from docs_cli.analyzer.resolver import (
+from pydocq.analyzer.resolver import (
     ElementNotFoundError,
     InvalidPathError,
     PackageNotFoundError,
@@ -92,7 +92,7 @@ class TestErrorSubclasses:
 class TestFormatErrorForOutput:
     """Tests for format_error_for_output function."""
 
-    def test_format_docs_cli_error(self) -> None:
+    def test_format_pydocq_error(self) -> None:
         """Test formatting DocsCliError."""
         error = DocsCliError("Test error", details={"key": "value"})
 
@@ -185,7 +185,7 @@ class TestHandleError:
 
         assert exc_info.value.code == 42
 
-    def test_handle_error_with_docs_cli_error(self, capsys) -> None:
+    def test_handle_error_with_pydocq_error(self, capsys) -> None:
         """Test handling DocsCliError outputs to stderr."""
         error = DocsCliError("Test error")
 

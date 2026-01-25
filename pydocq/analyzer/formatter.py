@@ -8,8 +8,8 @@ import inspect
 from datetime import datetime
 from pathlib import Path
 
-from docs_cli.analyzer.inspector import InspectedElement
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.inspector import InspectedElement
+from pydocq.utils.type_detection import ElementType
 
 
 def format_json(

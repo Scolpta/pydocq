@@ -4,7 +4,7 @@ This module provides decorators and utilities for adding structured
 metadata to Python code for better documentation and AI agent understanding.
 """
 
-from docs_cli.sdk.decorators import (
+from pydocq.sdk.decorators import (
     author,
     category,
     deprecated,
@@ -17,12 +17,12 @@ from docs_cli.sdk.decorators import (
     tag,
     when,
 )
-from docs_cli.sdk.decorators import (
+from pydocq.sdk.decorators import (
     clear_metadata,
     get_metadata,
     get_metadata_dict,
 )
-from docs_cli.sdk.decorators import Metadata as Metadata
+from pydocq.sdk.decorators import Metadata as Metadata
 
 __all__ = [
     "Metadata",

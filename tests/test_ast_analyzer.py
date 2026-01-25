@@ -4,7 +4,7 @@ import ast
 
 import pytest
 
-from docs_cli.analyzer.ast_analyzer import (
+from pydocq.analyzer.ast_analyzer import (
     ASTClassInfo,
     ASTFunctionInfo,
     ASTImportInfo,

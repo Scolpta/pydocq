@@ -10,8 +10,8 @@ import sys
 import types
 from typing import Any, Union, get_type_hints
 
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 class TypeInfo:

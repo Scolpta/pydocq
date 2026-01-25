@@ -4,7 +4,7 @@ import json
 
 from typer.testing import CliRunner
 
-from docs_cli.cli import app
+from pydocq.cli import app
 
 runner = CliRunner(mix_stderr=False)
 

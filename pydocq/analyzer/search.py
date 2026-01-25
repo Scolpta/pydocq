@@ -8,8 +8,8 @@ import fnmatch
 import inspect
 from typing import Any, Callable, List
 
-from docs_cli.analyzer.resolver import ResolvedElement, resolve_path
-from docs_cli.utils.type_detection import ElementType, get_element_type
+from pydocq.analyzer.resolver import ResolvedElement, resolve_path
+from pydocq.utils.type_detection import ElementType, get_element_type
 
 
 class SearchResult:
@@ -265,7 +265,7 @@ def search_by_metadata(
         List of SearchResult objects
     """
     try:
-        from docs_cli.sdk import get_metadata_dict
+        from pydocq.sdk import get_metadata_dict
     except ImportError:
         return []
 

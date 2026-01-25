@@ -2,15 +2,15 @@
 
 import pytest
 
-from docs_cli.analyzer.search import (
+from pydocq.analyzer.search import (
     SearchResult,
     search_by_docstring,
     search_by_metadata,
     search_by_name,
     search_by_type,
 )
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 class TestSearchResult:
@@ -110,7 +110,7 @@ class TestSearchByMetadata:
 
     def test_search_by_metadata_key(self) -> None:
         """Test searching by metadata key."""
-        from docs_cli.sdk import metadata, clear_metadata
+        from pydocq.sdk import metadata, clear_metadata
 
         # Add metadata to test function
         @metadata(category="test")

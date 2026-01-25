@@ -2,7 +2,7 @@
 
 import inspect
 
-from docs_cli.analyzer.formatter import (
+from pydocq.analyzer.formatter import (
     _format_docstring,
     _format_signature,
     _format_source_location,
@@ -10,14 +10,14 @@ from docs_cli.analyzer.formatter import (
     format_json_compact,
     format_json_verbose,
 )
-from docs_cli.analyzer.inspector import (
+from pydocq.analyzer.inspector import (
     DocstringInfo,
     SignatureInfo,
     SourceLocation,
     inspect_element,
 )
-from docs_cli.utils.type_detection import ElementType
-from docs_cli.analyzer.resolver import resolve_path
+from pydocq.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import resolve_path
 
 
 class TestFormatSignature:

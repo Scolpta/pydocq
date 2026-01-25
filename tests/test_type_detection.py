@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
-from docs_cli.utils.type_detection import (
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
+from pydocq.utils.type_detection import (
     get_element_name,
     get_element_qualname,
     get_element_type,

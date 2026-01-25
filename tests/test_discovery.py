@@ -2,14 +2,14 @@
 
 import os
 
-from docs_cli.analyzer.discovery import (
+from pydocq.analyzer.discovery import (
     MemberInfo,
     ModuleMembers,
     discover_class_members,
     discover_module_members,
 )
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 class TestDiscoverModuleMembers:

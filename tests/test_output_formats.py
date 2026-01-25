@@ -4,21 +4,21 @@ import inspect
 
 import pytest
 
-from docs_cli.analyzer.inspector import (
+from pydocq.analyzer.inspector import (
     DocstringInfo,
     InspectedElement,
     SignatureInfo,
     SourceLocation,
 )
-from docs_cli.analyzer.output_formats import (
+from pydocq.analyzer.output_formats import (
     format_markdown,
     format_raw,
     format_signature,
     format_yaml,
     get_formatter,
 )
-from docs_cli.analyzer.resolver import ElementType
-from docs_cli.utils.type_detection import ElementType
+from pydocq.analyzer.resolver import ElementType
+from pydocq.utils.type_detection import ElementType
 
 
 class TestFormatRaw:
