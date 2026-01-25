@@ -1,95 +1,287 @@
-# docs-cli
+# pydocq
 
-> **⚠️ Work in Progress**
+`pydocq` is a command-line interface tool for querying Python package documentation, specifically designed for AI agents. It provides structured, machine-readable JSON metadata about Python packages, classes, functions, and methods.
 
-A CLI tool that provides structured metadata about Python packages, designed specifically for AI agents to consume.
+## Features
 
-## Status
+### Core Functionality
 
-**Planning Stage** - This project is currently in the design and planning phase. See [docs/PROJECT.md](docs/PROJECT.md) for the project overview and [docs/features/roadmap.md](docs/features/roadmap.md) for the implementation plan.
+- **Path Resolution**: Query any Python element using dot notation (e.g., `pandas.DataFrame.merge`)
+- **Runtime Introspection**: Extract signatures, docstrings, and source locations using Python's inspect module
+- **Member Discovery**: List and categorize all members of modules and classes
+- **Type Annotation Parsing**: Parse and analyze complex type annotations (Optional, Union, generics)
+- **AST Static Analysis**: Analyze Python source code without importing it
+- **Search Functionality**: Search elements by name pattern, docstring content, type, or metadata
 
-## Documentation
+### SDK Decorators
 
-### Internal Documentation
+Add custom metadata to your code using decorators:
 
-For contributors and developers:
+- `@metadata(**kwargs)`: Add arbitrary metadata
+- `@example(code, description)`: Add code examples
+- `@deprecated(reason, since, version)`: Mark as deprecated
+- `@param(name, **info)`: Document parameters
+- `@returns(**info)`: Document return values
+- `@category(*categories)`: Categorize elements
+- `@tag(*tags)`: Add tags
+- `@when(version, condition)`: Add version information
+- `@note(text)`: Add notes
+- `@author(name, email)`: Add author information
+- `@see_also(*references)`: Add cross-references
 
-- **[PROJECT.md](docs/PROJECT.md)** - Project goals, architecture, and design principles
-- **[Features](docs/features/)** - Detailed feature specifications
-  - [Getting Started](docs/features/getting-started.md) - Agent workflows and usage examples
-  - [Roadmap](docs/features/roadmap.md) - Implementation phases and priorities
-  - [Feature Index](docs/features/index.md) - Complete list of planned features
+### Output Formats
 
-### Quick Overview
+- **json**: Structured, machine-readable JSON (default)
+- **raw**: Human-readable text format
+- **signature**: Minimal signature-only output
+- **markdown**: Markdown documentation format
+- **yaml**: YAML structure
 
-docs-cli extracts structured, machine-readable documentation from Python packages:
+## Installation
 
 ```bash
-# Query package structure
-doc pandas
-
-# Get specific element details
-doc pandas.DataFrame.merge
-
-# Get structured output (JSON)
-doc pandas.DataFrame --format json
-
-# Extract examples
-doc pandas.DataFrame.groupby --examples
+pip install pydocq
 ```
 
-**Output is optimized for AI agents, not humans:**
-- Structured JSON (not text)
-- Type information
-- Relationships between elements
-- Usage examples
-- Semantic metadata
+## Usage
 
-## Vision
+### Basic Query
 
-Traditional documentation tools are designed for human reading. docs-cli is different:
+```bash
+# Query a module
+pydocq json
 
-| Traditional Tools | docs-cli |
-|------------------|----------|
-| Human-readable text | Machine-readable JSON |
-- HTML docs | Structured metadata |
-| Tutorials + reference | Signatures + types + relationships |
-| For developers | For AI agents |
+# Query a function
+pydocq json.dumps
 
-**Target users:** AI agents that need to understand Python code without reading source files.
+# Query a class
+pydocq pandas.DataFrame
 
-## Example Use Case
+# Query a method
+pydocq pandas.DataFrame.merge
+```
+
+### Output Options
+
+```bash
+# Verbose output (includes SDK metadata)
+pydocq --verbose my_package.MyClass
+
+# Compact output (only path, type, module_path)
+pydocq --compact json.dumps
+
+# Include source location
+pydocq --include-source os.path.join
+
+# Include SDK metadata
+pydocq --include-metadata my_module.my_func
+
+# Exclude docstring or signature
+pydocq --no-docstring json.dumps
+pydocq --no-signature json.dumps
+```
+
+### Output Formats
+
+```bash
+# JSON (default)
+pydocq --format json json.dumps
+
+# Raw text format
+pydocq --format raw json.dumps
+
+# Signature only
+pydocq --format signature json.dumps
+
+# Markdown format
+pydocq --format markdown pandas.DataFrame
+
+# YAML format
+pydocq --format yaml json.dumps
+```
+
+### Member Discovery
+
+```bash
+# List all members of a module
+pydocq --list-members json
+
+# List all members including private ones
+pydocq --list-members --include-private json
+
+# List class members
+pydocq --list-members builtins.str
+
+# List class members including inherited
+pydocq --list-members --include-inherited my_package.MyClass
+```
+
+## Using SDK Decorators
 
 ```python
-# Agent receives: "How do I load and filter CSV data in pandas?"
+from pydocq import metadata, example, deprecated, tag
 
-# Instead of reading source code:
-1. doc pandas --search "CSV"
-2. doc pandas.read_csv --examples
-3. doc pandas.DataFrame --query "where param:DataFrame and returns:DataFrame"
-4. doc pandas.DataFrame.filter --type-summary
+@metadata(category="api", version="1.0")
+@tag("important", "stable")
+@example("result = my_function(42)", "Basic usage")
+@deprecated("Use new_function instead", since="1.0", version="2.0")
+def my_function(x: int) -> int:
+    """Process an integer value.
 
-# Agent gets structured information → generates working code
+    Args:
+        x: The input value
+
+    Returns:
+        The processed value
+    """
+    return x * 2
 ```
 
-## Current State
+Query with metadata:
 
-- ✅ Complete feature specification (25+ features)
-- ✅ Architecture design
-- ✅ Implementation roadmap
-- 🏗️ **Planning phase** - No code written yet
+```bash
+pydocq --include-metadata my_module.my_function
+```
 
-See [docs/features/roadmap.md](docs/features/roadmap.md) for the implementation plan.
+Output:
+
+```json
+{
+  "path": "my_module.my_function",
+  "type": "function",
+  "module_path": "my_module",
+  "signature": {
+    "parameters": [
+      {
+        "name": "x",
+        "kind": "POSITIONAL_OR_KEYWORD",
+        "annotation": "int",
+        "default": null
+      }
+    ],
+    "return_type": "int"
+  },
+  "docstring": {
+    "docstring": "Process an integer value...",
+    "length": 123
+  },
+  "sdk_metadata": {
+    "category": "api",
+    "version": "1.0",
+    "tags": ["important", "stable"],
+    "example": {"code": "result = my_function(42)", "description": "Basic usage"},
+    "deprecated": {"reason": "Use new_function instead", "since": "1.0", "version": "2.0"}
+  }
+}
+```
+
+## Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/pydocq.git
+cd pydocq
+
+# Install with uv
+uv pip install -e .
+
+# Or with pip
+pip install -e .
+```
+
+### Running Tests
+
+```bash
+# Install development dependencies
+uv pip install pytest pytest-cov
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=pydocq --cov-report=html
+```
+
+### Building for Distribution
+
+```bash
+# Build with uv
+uv build
+
+# Or with pip
+python -m build
+
+# The built package will be in dist/
+```
+
+## Project Structure
+
+```
+pydocq/
+├── pydocq/
+│   ├── __init__.py
+│   ├── cli.py              # CLI interface
+│   ├── analyzer/
+│   │   ├── resolver.py      # Path resolution
+│   │   ├── inspector.py     # Runtime introspection
+│   │   ├── formatter.py     # JSON formatting
+│   │   ├── discovery.py     # Member discovery
+│   │   ├── errors.py        # Error handling
+│   │   ├── type_parser.py   # Type annotation parsing
+│   │   ├── ast_analyzer.py  # AST static analysis
+│   │   ├── output_formats.py # Output formatters
+│   │   └── search.py        # Search functionality
+│   └── sdk/
+│       ├── __init__.py
+│       └── decorators.py     # SDK decorators
+├── tests/
+│   ├── test_cli.py
+│   ├── test_resolver.py
+│   ├── test_inspector.py
+│   ├── test_formatter.py
+│   ├── test_discovery.py
+│   ├── test_errors.py
+│   ├── test_type_parser.py
+│   ├── test_ast_analyzer.py
+│   ├── test_output_formats.py
+│   ├── test_sdk_decorators.py
+│   └── test_search.py
+├── docs/                    # Internal documentation
+├── README.md
+├── LICENSE
+├── pyproject.toml
+└── .python-version
+```
 
 ## Contributing
 
-Not ready for contributions yet. We're still in the planning phase.
-
-Once implementation starts:
-1. Check [Roadmap](docs/features/roadmap.md) for priorities
-2. Review [Features](docs/features/) for specifications
-3. Pick a feature from the backlog
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-[Specify your license here]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+Built with:
+- Typer for CLI interface
+- Python's inspect module for runtime introspection
+- Python's AST module for static analysis
+- pytest for testing
+
+## Changelog
+
+### 0.1.0 (Unreleased)
+
+- Initial release
+- Path resolution for Python packages
+- Runtime introspection with inspect module
+- Member discovery for modules and classes
+- Type annotation parsing
+- AST static analysis
+- SDK decorators for custom metadata
+- Search functionality
+- Multiple output formats (JSON, raw, signature, markdown, YAML)
+- Comprehensive test coverage (178 tests)
