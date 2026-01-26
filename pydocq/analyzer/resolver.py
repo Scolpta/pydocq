@@ -144,12 +144,30 @@ def resolve_path(path_string: str) -> ResolvedElement:
                 f"Access to '{current_path}' is not allowed for security reasons"
             )
 
+    # Normalize package name: convert hyphens to underscores for import
+    # This handles the common case where PyPI names use hyphens but Python imports use underscores
+    # Example: 'better-py-fp' (PyPI) -> 'better_py' (import)
+    original_package_name = package_name
+    normalized_package_name = package_name.replace("-", "_")
+
     try:
-        # Try to import the package/module
-        module = importlib.import_module(package_name)
+        # Try to import the package/module with normalized name first (if different)
+        # This allows users to use PyPI names directly
+        if normalized_package_name != package_name:
+            try:
+                module = importlib.import_module(normalized_package_name)
+                # Update package_name to the normalized version for subsequent operations
+                package_name = normalized_package_name
+                # Update path_string to reflect the normalized package name
+                path_string = ".".join([normalized_package_name] + parts[1:])
+            except ImportError:
+                # Normalized version doesn't exist, try original name
+                module = importlib.import_module(package_name)
+        else:
+            module = importlib.import_module(package_name)
     except ImportError as e:
         raise PackageNotFoundError(
-            f"Package or module '{package_name}' not found or cannot be imported"
+            f"Package or module '{original_package_name}' not found or cannot be imported"
         ) from e
 
     # If only package name provided, return the module
