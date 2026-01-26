@@ -2,9 +2,11 @@
 
 import json
 import sys
+from dataclasses import asdict
 
 from typer import Exit, Option, Typer
 
+from pydocq.analyzer.ast_analyzer import analyze_file, ASTSecurityError
 from pydocq.analyzer.discovery import discover_class_members, discover_module_members
 from pydocq.analyzer.errors import DocsCliError
 from pydocq.analyzer.formatter import format_json, format_json_compact, format_json_verbose
@@ -164,6 +166,68 @@ def query(
         raise Exit(code=1)
     except ValueError as e:
         # Invalid format type
+        sys.stderr.write(f"Error: {e}\n")
+        raise Exit(code=1)
+
+
+@app.command()
+def analyze(
+    file_path: str,
+    element: str = Option(None, "--element", "-e", help="Specific element to analyze (class or function name)"),
+    format: str = Option("json", "--format", "-f", help="Output format (json, raw, signature, markdown, yaml, llm)"),
+) -> None:
+    """Analyze a Python file using AST without importing dependencies.
+
+    This command analyzes Python source code without executing it, making it safe
+    to analyze untrusted or malicious code without side effects.
+
+    FILE_PATH is the path to the Python file to analyze.
+
+    Examples:
+        pydocq analyze src/utils.py
+        pydocq analyze src/utils.py --element MyClass
+        pydocq analyze src/utils.py --element my_function --format markdown
+    """
+    try:
+        # Analyze the file
+        result = analyze_file(file_path)
+
+        # If a specific element is requested, filter the result
+        if element:
+            # Try to find the element in classes
+            for cls in result.classes:
+                if cls.name == element:
+                    # Output only this class
+                    output_data = asdict(cls)
+                    sys.stdout.write(json.dumps(output_data, indent=2))
+                    return
+
+            # Try to find the element in functions
+            for func in result.functions:
+                if func.name == element:
+                    # Output only this function
+                    output_data = asdict(func)
+                    sys.stdout.write(json.dumps(output_data, indent=2))
+                    return
+
+            # Element not found
+            sys.stderr.write(f"Error: Element '{element}' not found in {file_path}\n")
+            raise Exit(code=1)
+        else:
+            # Output the entire module analysis
+            output_data = asdict(result)
+            sys.stdout.write(json.dumps(output_data, indent=2))
+
+    except ASTSecurityError as e:
+        sys.stderr.write(f"Security Error: {e}\n")
+        raise Exit(code=1)
+    except FileNotFoundError as e:
+        sys.stderr.write(f"Error: {e}\n")
+        raise Exit(code=1)
+    except SyntaxError as e:
+        sys.stderr.write(f"Syntax Error: {e}\n")
+        raise Exit(code=1)
+    except Exception as e:
         sys.stderr.write(f"Error: {e}\n")
         raise Exit(code=1)
 

@@ -11,14 +11,14 @@ runner = CliRunner()
 
 def test_cli_runs() -> None:
     """Test that the CLI runs without errors."""
-    result = runner.invoke(app, ["--help"])
+    result = runner.invoke(app, ["query", "--help"])
     assert result.exit_code == 0
     assert "Query Python package documentation" in result.stdout
 
 
 def test_query_command() -> None:
     """Test the query command with standard library."""
-    result = runner.invoke(app, ["os"])
+    result = runner.invoke(app, ["query", "os"])
     assert result.exit_code == 0
 
     # Parse JSON output
@@ -32,7 +32,7 @@ def test_query_command() -> None:
 
 def test_query_command_nested() -> None:
     """Test the query command with nested path."""
-    result = runner.invoke(app, ["os.path.join"])
+    result = runner.invoke(app, ["query", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -46,7 +46,7 @@ def test_query_command_nested() -> None:
 
 def test_query_command_class() -> None:
     """Test the query command with a class."""
-    result = runner.invoke(app, ["builtins.str"])
+    result = runner.invoke(app, ["query", "builtins.str"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -58,7 +58,7 @@ def test_query_command_class() -> None:
 
 def test_query_command_nonexistent_package() -> None:
     """Test the query command with non-existent package."""
-    result = runner.invoke(app, ["nonexistentpackage"])
+    result = runner.invoke(app, ["query", "nonexistentpackage"])
     assert result.exit_code == 1
     # The error message goes to stderr (if captured)
     try:
@@ -71,7 +71,7 @@ def test_query_command_nonexistent_package() -> None:
 
 def test_query_command_nonexistent_element() -> None:
     """Test the query command with non-existent element."""
-    result = runner.invoke(app, ["os.NonExistentClass"])
+    result = runner.invoke(app, ["query", "os.NonExistentClass"])
     assert result.exit_code == 1
     # The error message goes to stderr (if captured)
     try:
@@ -84,7 +84,7 @@ def test_query_command_nonexistent_element() -> None:
 
 def test_query_compact_option() -> None:
     """Test the --compact option."""
-    result = runner.invoke(app, ["--compact", "os.path.join"])
+    result = runner.invoke(app, ["query", "--compact", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -95,7 +95,7 @@ def test_query_compact_option() -> None:
 
 def test_query_verbose_option() -> None:
     """Test the --verbose option."""
-    result = runner.invoke(app, ["--verbose", "os.path.join"])
+    result = runner.invoke(app, ["query", "--verbose", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -110,7 +110,7 @@ def test_query_verbose_option() -> None:
 
 def test_query_no_docstring_option() -> None:
     """Test the --no-docstring option."""
-    result = runner.invoke(app, ["--no-docstring", "os.path.join"])
+    result = runner.invoke(app, ["query", "--no-docstring", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -120,7 +120,7 @@ def test_query_no_docstring_option() -> None:
 
 def test_query_no_signature_option() -> None:
     """Test the --no-signature option."""
-    result = runner.invoke(app, ["--no-signature", "os.path.join"])
+    result = runner.invoke(app, ["query", "--no-signature", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -130,7 +130,7 @@ def test_query_no_signature_option() -> None:
 
 def test_query_include_source_option() -> None:
     """Test the --include-source option."""
-    result = runner.invoke(app, ["--include-source", "os.path.join"])
+    result = runner.invoke(app, ["query", "--include-source", "os.path.join"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -140,7 +140,7 @@ def test_query_include_source_option() -> None:
 
 def test_query_list_members_module() -> None:
     """Test the --list-members option for modules."""
-    result = runner.invoke(app, ["--list-members", "json"])
+    result = runner.invoke(app, ["query", "--list-members", "json"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -152,7 +152,7 @@ def test_query_list_members_module() -> None:
 
 def test_query_list_members_class() -> None:
     """Test the --list-members option for classes."""
-    result = runner.invoke(app, ["--list-members", "builtins.str"])
+    result = runner.invoke(app, ["query", "--list-members", "builtins.str"])
     assert result.exit_code == 0
 
     output = json.loads(result.stdout)
@@ -163,8 +163,8 @@ def test_query_list_members_class() -> None:
 
 def test_query_list_members_with_private() -> None:
     """Test the --list-members option with --include-private."""
-    result_no_private = runner.invoke(app, ["--list-members", "json"])
-    result_with_private = runner.invoke(app, ["--list-members", "--include-private", "json"])
+    result_no_private = runner.invoke(app, ["query", "--list-members", "json"])
+    result_with_private = runner.invoke(app, ["query", "--list-members", "--include-private", "json"])
 
     assert result_no_private.exit_code == 0
     assert result_with_private.exit_code == 0
@@ -178,7 +178,7 @@ def test_query_list_members_with_private() -> None:
 
 def test_query_list_members_function_returns_error() -> None:
     """Test that --list-members on a function returns an error message."""
-    result = runner.invoke(app, ["--list-members", "os.path.join"])
+    result = runner.invoke(app, ["query", "--list-members", "os.path.join"])
     assert result.exit_code == 1
 
     # Error message goes to stderr (if captured)
@@ -192,7 +192,7 @@ def test_query_list_members_function_returns_error() -> None:
 
 def test_query_format_raw() -> None:
     """Test the --format raw option."""
-    result = runner.invoke(app, ["--format", "raw", "json.dumps"])
+    result = runner.invoke(app, ["query", "--format", "raw", "json.dumps"])
     assert result.exit_code == 0
 
     output = result.stdout
@@ -202,7 +202,7 @@ def test_query_format_raw() -> None:
 
 def test_query_format_signature() -> None:
     """Test the --format signature option."""
-    result = runner.invoke(app, ["--format", "signature", "json.dumps"])
+    result = runner.invoke(app, ["query", "--format", "signature", "json.dumps"])
     assert result.exit_code == 0
 
     output = result.stdout.strip()
@@ -211,7 +211,7 @@ def test_query_format_signature() -> None:
 
 def test_query_format_markdown() -> None:
     """Test the --format markdown option."""
-    result = runner.invoke(app, ["--format", "markdown", "json.dumps"])
+    result = runner.invoke(app, ["query", "--format", "markdown", "json.dumps"])
     assert result.exit_code == 0
 
     output = result.stdout
@@ -221,7 +221,7 @@ def test_query_format_markdown() -> None:
 
 def test_query_format_yaml() -> None:
     """Test the --format yaml option."""
-    result = runner.invoke(app, ["--format", "yaml", "json.dumps"])
+    result = runner.invoke(app, ["query", "--format", "yaml", "json.dumps"])
     assert result.exit_code == 0
 
     output = result.stdout
@@ -230,7 +230,7 @@ def test_query_format_yaml() -> None:
 
 def test_query_format_invalid() -> None:
     """Test that invalid format returns error."""
-    result = runner.invoke(app, ["--format", "invalid", "json.dumps"])
+    result = runner.invoke(app, ["query", "--format", "invalid", "json.dumps"])
     assert result.exit_code == 1
 
     try:
