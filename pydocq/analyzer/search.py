@@ -6,7 +6,9 @@ based on various criteria like name patterns, docstrings, metadata, etc.
 
 import fnmatch
 import inspect
-from typing import Any, Callable, List
+import re
+from dataclasses import dataclass
+from typing import Any, Callable, List, Optional
 
 from pydocq.analyzer.resolver import ResolvedElement, resolve_path
 from pydocq.utils.type_detection import ElementType, get_element_type
@@ -310,6 +312,141 @@ def search_by_metadata(
                         )
                     )
 
+            if inspect.ismodule(member) or inspect.isclass(member):
+                search_object(member, f"{current_path}.{name}", depth + 1)
+
+    search_object(resolved.obj, resolved.path, depth=0)
+    return results
+
+
+@dataclass
+class MatchResult:
+    """Result of a search operation with additional metadata."""
+
+    path: str
+    name: str
+    element_type: str
+    module: str
+    is_public: bool
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for JSON output."""
+        return {
+            "path": self.path,
+            "name": self.name,
+            "type": self.element_type,
+            "module": self.module,
+            "is_public": self.is_public,
+        }
+
+
+def search_members(
+    module_path: str,
+    pattern: str,
+    *,
+    use_regex: bool = False,
+    case_sensitive: bool = False,
+    element_type_filter: Optional[str] = None,
+    max_results: Optional[int] = None,
+    include_private: bool = False,
+    max_depth: int = 10,
+) -> List[MatchResult]:
+    """Search for members matching a pattern in a module.
+
+    This is an enhanced search function that supports both glob patterns
+    and regex patterns, with additional filtering options.
+
+    Args:
+        module_path: Module path to search in (e.g., "json" or "pandas")
+        pattern: Search pattern (glob or regex)
+        use_regex: If True, treat pattern as regex instead of glob
+        case_sensitive: If True, case-sensitive search
+        element_type_filter: Filter by element type (class, function, method, etc.)
+        max_results: Maximum number of results to return
+        include_private: Include private members (starting with _)
+        max_depth: Maximum recursion depth
+
+    Returns:
+        List of MatchResult objects
+    """
+    try:
+        resolved = resolve_path(module_path)
+    except Exception:
+        return []
+
+    results = []
+    visited = set()
+
+    def _matches(name: str) -> bool:
+        """Check if name matches the pattern."""
+        # Empty pattern matches everything
+        if not pattern:
+            return True
+
+        if not case_sensitive:
+            name = name.lower()
+            search_pattern = pattern.lower()
+        else:
+            search_pattern = pattern
+
+        if use_regex:
+            try:
+                return bool(re.search(search_pattern, name))
+            except re.error:
+                # Invalid regex, fall back to substring match
+                return search_pattern in name
+        else:
+            # Use glob pattern matching
+            return fnmatch.fnmatch(name, search_pattern)
+
+    def search_object(obj: Any, current_path: str, depth: int) -> None:
+        """Recursively search object with depth limit."""
+        if depth > max_depth:
+            return
+
+        obj_id = id(obj)
+        if obj_id in visited:
+            return
+        visited.add(obj_id)
+
+        try:
+            members = inspect.getmembers(obj)
+        except Exception:
+            return
+
+        for name, member in members:
+            # Check max results before each iteration
+            if max_results and len(results) >= max_results:
+                return
+
+            # Skip private members if requested
+            if not include_private and name.startswith("_"):
+                continue
+
+            # Check if name matches pattern
+            if _matches(name):
+                elem_type = get_element_type(member)
+
+                # Filter by element type if specified
+                if element_type_filter and elem_type.value != element_type_filter:
+                    continue
+
+                # Create result
+                results.append(
+                    MatchResult(
+                        path=f"{current_path}.{name}",
+                        name=name,
+                        element_type=elem_type.value,
+                        module=current_path,
+                        is_public=not name.startswith("_"),
+                    )
+                )
+
+                # Check max results after adding
+                if max_results and len(results) >= max_results:
+                    return
+
+            # Recursively search modules and classes
             if inspect.ismodule(member) or inspect.isclass(member):
                 search_object(member, f"{current_path}.{name}", depth + 1)
 

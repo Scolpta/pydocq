@@ -11,7 +11,9 @@
       "Bash(git branch:*)",
       "Bash(pip install:*)",
       "Bash(git push:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)"
     ]
   }
 }
