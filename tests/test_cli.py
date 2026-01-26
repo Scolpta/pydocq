@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from pydocq.cli import app
 
-runner = CliRunner(mix_stderr=False)
+runner = CliRunner()
 
 
 def test_cli_runs() -> None:
@@ -60,18 +60,26 @@ def test_query_command_nonexistent_package() -> None:
     """Test the query command with non-existent package."""
     result = runner.invoke(app, ["nonexistentpackage"])
     assert result.exit_code == 1
-    # The error message goes to stderr
-    if result.stderr:
-        assert "nonexistentpackage" in result.stderr
+    # The error message goes to stderr (if captured)
+    try:
+        if result.stderr:
+            assert "nonexistentpackage" in result.stderr
+    except ValueError:
+        # stderr not separately captured in this version
+        pass
 
 
 def test_query_command_nonexistent_element() -> None:
     """Test the query command with non-existent element."""
     result = runner.invoke(app, ["os.NonExistentClass"])
     assert result.exit_code == 1
-    # The error message goes to stderr
-    if result.stderr:
-        assert "NonExistentClass" in result.stderr or "not found" in result.stderr
+    # The error message goes to stderr (if captured)
+    try:
+        if result.stderr:
+            assert "NonExistentClass" in result.stderr or "not found" in result.stderr
+    except ValueError:
+        # stderr not separately captured in this version
+        pass
 
 
 def test_query_compact_option() -> None:
@@ -173,9 +181,13 @@ def test_query_list_members_function_returns_error() -> None:
     result = runner.invoke(app, ["--list-members", "os.path.join"])
     assert result.exit_code == 1
 
-    # Error message goes to stderr
-    if result.stderr:
-        assert "Cannot list members" in result.stderr
+    # Error message goes to stderr (if captured)
+    try:
+        if result.stderr:
+            assert "Cannot list members" in result.stderr
+    except ValueError:
+        # stderr not separately captured in this version
+        pass
 
 
 def test_query_format_raw() -> None:
@@ -221,5 +233,9 @@ def test_query_format_invalid() -> None:
     result = runner.invoke(app, ["--format", "invalid", "json.dumps"])
     assert result.exit_code == 1
 
-    if result.stderr:
-        assert "Unsupported format" in result.stderr
+    try:
+        if result.stderr:
+            assert "Unsupported format" in result.stderr
+    except ValueError:
+        # stderr not separately captured in this version
+        pass

@@ -60,7 +60,7 @@ def _format_module_members(module_members) -> dict:
 @app.command()
 def query(
     target: str,
-    version: bool = Option(False, "--version", "-v", help="Show version and exit"),
+    show_version: bool = Option(False, "--version", "-v", help="Show version and exit"),
     format: str = Option("json", "--format", "-f", help="Output format (json, raw, signature, markdown, yaml)"),
     compact: bool = Option(False, "--compact", "-c", help="Use compact output format"),
     verbose: bool = Option(False, "--verbose", "-V", help="Use verbose output format"),
@@ -82,7 +82,7 @@ def query(
         doc pandas.core.frame.DataFrame.merge
         doc os.path.join
     """
-    if version:
+    if show_version:
         from pydocq import __version__
 
         sys.stdout.write(f"docs-cli v{__version__}\n")
