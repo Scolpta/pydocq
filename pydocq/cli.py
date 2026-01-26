@@ -39,11 +39,12 @@ def _format_member_info(member) -> dict:
     }
 
 
-def _format_module_members(module_members, exclude_system: bool = True) -> dict:
+
     """Format a ModuleMembers object for JSON output.
 
     Args:
         module_members: ModuleMembers object
+
         exclude_system: Whether to filter out Python system metadata (__*__ attributes)
 
     Returns:
@@ -59,15 +60,7 @@ def _format_module_members(module_members, exclude_system: bool = True) -> dict:
             return [m for m in members if not _is_system_member(m.name)]
         return members
 
-    return {
-        "path": module_members.path,
-        "members": [_format_member_info(m) for m in _filter_members(module_members.members)],
-        "classes": [_format_member_info(m) for m in _filter_members(module_members.classes)],
-        "functions": [_format_member_info(m) for m in _filter_members(module_members.functions)],
-        "methods": [_format_member_info(m) for m in _filter_members(module_members.methods)],
-        "properties": [_format_member_info(m) for m in _filter_members(module_members.properties)],
-        "submodules": [_format_member_info(m) for m in _filter_members(module_members.submodules)],
-    }
+
 
 
 @app.command()
@@ -117,15 +110,14 @@ def query(
         # Handle list_members option
         if list_members:
             if resolved.element_type == ElementType.MODULE:
-                # When --include-system is used, we also need include_private=True
-                # to discover dunder attributes
+
                 discover_private = include_private or include_system
                 members = discover_module_members(
                     resolved.obj,
                     include_private=discover_private,
                     include_imported=include_imported,
                 )
-                output_dict = _format_module_members(members, exclude_system=not include_system)
+
                 # Output is always JSON for list_members
                 sys.stdout.write(json.dumps(output_dict, indent=2))
                 return
