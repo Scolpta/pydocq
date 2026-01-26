@@ -39,23 +39,34 @@ def _format_member_info(member) -> dict:
     }
 
 
-def _format_module_members(module_members) -> dict:
+def _format_module_members(module_members, exclude_system: bool = True) -> dict:
     """Format a ModuleMembers object for JSON output.
 
     Args:
         module_members: ModuleMembers object
+        exclude_system: Whether to filter out Python system metadata (__*__ attributes)
 
     Returns:
         JSON-serializable dictionary
     """
+    def _is_system_member(member_name: str) -> bool:
+        """Check if a member name is a Python system attribute."""
+        return member_name.startswith("__") and member_name.endswith("__")
+
+    def _filter_members(members):
+        """Filter out system members if exclude_system is True."""
+        if exclude_system:
+            return [m for m in members if not _is_system_member(m.name)]
+        return members
+
     return {
         "path": module_members.path,
-        "members": [_format_member_info(m) for m in module_members.members],
-        "classes": [_format_member_info(m) for m in module_members.classes],
-        "functions": [_format_member_info(m) for m in module_members.functions],
-        "methods": [_format_member_info(m) for m in module_members.methods],
-        "properties": [_format_member_info(m) for m in module_members.properties],
-        "submodules": [_format_member_info(m) for m in module_members.submodules],
+        "members": [_format_member_info(m) for m in _filter_members(module_members.members)],
+        "classes": [_format_member_info(m) for m in _filter_members(module_members.classes)],
+        "functions": [_format_member_info(m) for m in _filter_members(module_members.functions)],
+        "methods": [_format_member_info(m) for m in _filter_members(module_members.methods)],
+        "properties": [_format_member_info(m) for m in _filter_members(module_members.properties)],
+        "submodules": [_format_member_info(m) for m in _filter_members(module_members.submodules)],
     }
 
 
@@ -71,6 +82,7 @@ def query(
     include_source: bool = Option(False, "--include-source", "-s", help="Include source location"),
     include_metadata: bool = Option(False, "--include-metadata", "-m", help="Include SDK metadata"),
     list_members: bool = Option(False, "--list-members", "-l", help="List all members of module/class"),
+    include_system: bool = Option(False, "--include-system", help="Include Python system metadata (__*__ attributes)"),
     include_private: bool = Option(False, "--include-private", help="Include private members"),
     include_imported: bool = Option(False, "--include-imported", help="Include imported members"),
     include_inherited: bool = Option(False, "--include-inherited", help="Include inherited members"),
@@ -105,21 +117,31 @@ def query(
         # Handle list_members option
         if list_members:
             if resolved.element_type == ElementType.MODULE:
+                # When --include-system is used, we also need include_private=True
+                # to discover dunder attributes
+                discover_private = include_private or include_system
                 members = discover_module_members(
                     resolved.obj,
-                    include_private=include_private,
+                    include_private=discover_private,
                     include_imported=include_imported,
                 )
-                output_dict = _format_module_members(members)
+                output_dict = _format_module_members(members, exclude_system=not include_system)
                 # Output is always JSON for list_members
                 sys.stdout.write(json.dumps(output_dict, indent=2))
                 return
             elif resolved.element_type == ElementType.CLASS:
+                # For classes, also include private when showing system members
+                discover_private = include_private or include_system
                 members = discover_class_members(
                     resolved.obj,
-                    include_private=include_private,
+                    include_private=discover_private,
                     include_inherited=include_inherited,
                 )
+                # Filter out system members for classes too
+                def _is_system_member(member_name: str) -> bool:
+                    return member_name.startswith("__") and member_name.endswith("__")
+                if not include_system:
+                    members = [m for m in members if not _is_system_member(m.name)]
                 output_dict = {
                     "path": resolved.path,
                     "type": resolved.element_type.value,
