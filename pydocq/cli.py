@@ -72,6 +72,7 @@ def query(
     include_private: bool = Option(False, "--include-private", help="Include private members"),
     include_imported: bool = Option(False, "--include-imported", help="Include imported members"),
     include_inherited: bool = Option(False, "--include-inherited", help="Include inherited members"),
+    for_ai: bool = Option(False, "--for-ai", help="AI-optimized output (enables llm format, metadata, source, verbose)"),
 ) -> None:
     """Query Python package documentation.
 
@@ -87,6 +88,13 @@ def query(
 
         sys.stdout.write(f"docs-cli v{__version__}\n")
         raise Exit(code=0)
+
+    # Handle --for-ai flag: combine all AI-optimized options
+    if for_ai:
+        format = "llm"
+        include_metadata = True
+        include_source = True
+        verbose = True
 
     try:
         # Resolve the target path
