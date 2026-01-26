@@ -61,7 +61,7 @@ def _format_module_members(module_members) -> dict:
 def query(
     target: str,
     show_version: bool = Option(False, "--version", "-v", help="Show version and exit"),
-    format: str = Option("json", "--format", "-f", help="Output format (json, raw, signature, markdown, yaml)"),
+    format: str = Option("json", "--format", "-f", help="Output format (json, raw, signature, markdown, yaml, llm)"),
     compact: bool = Option(False, "--compact", "-c", help="Use compact output format"),
     verbose: bool = Option(False, "--verbose", "-V", help="Use verbose output format"),
     no_docstring: bool = Option(False, "--no-docstring", help="Exclude docstring from output"),
